@@ -107,9 +107,9 @@ def get_publications():
 
         # Get keywords.
         for keyword in result_source.get('keywords', []):
-            if keyword.get('keyword') is not "* Automatic Keywords *" \
-                    and keyword.get('keyword'):
-                keywords.add(keyword.get('keyword'))
+            if keyword.get('value') is not "* Automatic Keywords *" \
+                    and keyword.get('value'):
+                keywords.add(keyword.get('value'))
 
         # Get collaborations.
         for experiment in result_source.get(
