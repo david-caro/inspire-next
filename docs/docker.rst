@@ -24,9 +24,8 @@ Docker (Linux)
 ==============
 
 Docker is an application that makes it simple and easy to run processes in a container,
-which are like virtual machines, more resource-friendly, and more dependent
-on the host operating system. For a detailed introduction to the different components of a Docker
-container.
+which are like virtual machines, more resource-friendly. For a detailed introduction to the
+different components of a Docker container.
 
 Useful `Tutorial
 <https://www.digitalocean.com/community/tutorials/the-docker-ecosystem-an-introduction-to-common-components>`_.
@@ -45,9 +44,13 @@ Make sure you can run docker without ``sudo``.
 - ``id $USER``
 
   If you are not in the ``docker`` group, run the following command and then restart ``docker``. If this doesn't work, just restart your machine :)
--  ``sudo usermod -a -G docker $USER``
 
-Get docker-compose:
+- ``newgrp docker`` or ``su - $USER``
+
+- ``sudo usermod -a -G docker $USER``
+
+Get `docker-compose
+<https://docs.docker.com/compose/>`_:
 
 .. code-block:: console
 
@@ -57,6 +60,7 @@ Get docker-compose:
 
 .. code-block:: console
 
+ shell mkdir -p "$DOCKER_DATA"
  export DOCKER_DATA=~/inspirehep_docker_data/
 
 By default the virtualenv and everything else will be kept on ``/tmp`` and they will be available only until the next reboot.
@@ -67,6 +71,14 @@ By default the virtualenv and everything else will be kept on ``/tmp`` and they 
 
  docker-compose pull
  docker-compose -f docker-compose.deps.yml run --rm pip
+
+.. note:: If you have trouble with internet connection inside docker probably you are facing known
+          DNS issue. Please follow `this solution
+          <http://askubuntu.com/questions/475764/docker-io-dns-doesnt-work-its-trying-to-use-8-8-8-8/790778#790778>`_
+          with DNS: ``--dns 137.138.17.5 --dns 137.138.16.5``.
+
+.. code-block:: console
+
  docker-compose -f docker-compose.deps.yml run --rm assets
 
 - Run the service locally
@@ -83,18 +95,32 @@ Go to ``localhost:5000``
 
  docker-compose run --rm web scripts/recreate_records
 
-- Run tests in an **isolated** environment:
+- Run tests in an **isolated** environment.
+
+  You can choose one of the following tests types:
+
+  - unit
+  - disambiguation
+  - workflows
+  - integration
+  - acceptance
 
 .. code-block:: console
 
- docker-compose -f docker-compose.test.yml run --rm test
- docker-compose -f docker-compose.test.yml kill
- docker-compose -f docker-compose.test.yml rm
+ docker-compose -f docker-compose.test.yml run --rm <tests type>
+ docker-compose -f docker-compose.test.yml down
 
-**The kill command is mandatory, otherwise you will use the test DB instead of the correct one in dev.**
+.. tip:: - cleanup all the containers:
 
-I don't know how to kill all the other services just after the run command exited.
+           ``docker rm $(docker ps -qa)``
 
+         - cleanup all the images:
+
+           ``docker rmi $(docker images -q)``
+
+         - cleanup the virtualenv (careful, if docker_data is set to something you care about, it will be removed):
+
+           ``sudo rm -rf "${DOCKER_DATA?DOCKER_DATA was not set, ignoring}"``
 
 Extra useful tips
 #################
@@ -106,6 +132,16 @@ After ``docker-compose up`` just run:
 .. code-block:: console
 
  docker-compose run --rm web inspirehep shell
+
+- Run *virtualenv* bash shell for running scripts manually (e.g. recreating records or `building documentation`_)
+
+.. _building documentation: http://inspirehep.readthedocs.io/en/latest/building_the_docs.html
+
+With ``docker-compose up`` just run:
+
+.. code-block:: console
+
+ docker-compose run --rm web bash
 
 - Reload code in a worker
 
