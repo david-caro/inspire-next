@@ -141,6 +141,10 @@ USERPROFILES_SETTINGS_TEMPLATE = 'inspirehep_theme/accounts/settings/profile.htm
 
 # Collections
 # ===========
+# Needed for custom collections fix by jacquerie
+# see https://github.com/inveniosoftware/invenio-collections/pull/73
+COLLECTIONS_MATCHER = lambda collections, record: record['_collections']
+
 COLLECTIONS_DELETED_RECORDS = '{dbquery} AND NOT deleted:True'
 """Enhance collection query to exclude deleted records."""
 
