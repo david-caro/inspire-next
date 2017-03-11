@@ -105,6 +105,8 @@ Go to ``localhost:5000``
   - integration
   - acceptance
 
+  See _`Tests` for details about them.
+
 .. code-block:: console
 
  docker-compose -f docker-compose.test.yml run --rm <tests type>

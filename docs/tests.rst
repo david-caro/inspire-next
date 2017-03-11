@@ -20,28 +20,81 @@
     or submit itself to any jurisdiction.
 
 
-Inspire Tests
-=============
+Tests
+=====
 
-How to Run the Selenium Tests
------------------------------
+
+Inspire has several suites of tests, at the time of wrining this howto, it has
+5 (that's mainly because it's the size of parallel runner pool in the free
+tier on travis). But they mostly can be separated into 3 types:
+
+* Unit tests: it's main goal is to test units of code (normaly functions),
+  should be fast to run, and focus only on the code of the unit of code they
+  are meant for, mocking if needed any external calls that are complex, slow
+  or prone to failure. These tests should be relatively simple and stable.
+
+* Integration tests: these focus on testing the interaction between the units
+  of code that the unit tests handled, moking only external services. They are
+  a bit slower than the unit tests, and a bit more complex and fragile.
+
+* Acceptance tests: the acceptance tests will make sure that the end-to-end
+  processes they test actually work ok. They are the slowest and the more
+  complex of all, and as such, also the more britle, but give you a really high
+  level of confidence that the business logic they test actually works.
+
+
+
+Unit tests
+----------
+
+To run only the unit tests, you can just:
+
+.. code-block:: console
+
+    docker-compose -f docker-compose.tests.yml run --rm unit
+
+
+Integration tests
+-----------------
+As stated before, the integration tests are actually split in several suites,
+currently three:
+
+* ``disambiguation``
+* ``workflows``
+* ``integration``
+
+To run any of them, just use the same command as the unit tests changing the
+name of the suite at the end, for example to run the ``integration`` suite:
+
+.. code-block:: console
+
+    docker-compose -f docker-compose.tests.yml run --rm integration
+
+
+Acceptance tests
+----------------
+
+For the acceptance tests we use a framework called `Selenium`_, what it does is
+actually fire up a browser (we use firefox) and click around, do requests and
+assert about the contents of the page.
+
+This framework can run on the background, or can show the browser window on
+your laptop. So let's see how to run it:
 
 Via Docker
 ~~~~~~~~~~
 
 1. If you have not installed ``docker`` and ``docker-compose``, `install them now`_.
 
-.. _install them now: https://github.com/inspirehep/inspire-next/pull/1015
-
-2. Run ``docker``:
+2. Run ``docker-compose``:
 
 .. code-block:: bash
 
   $ docker-compose -f docker-compose.test.yml run --rm acceptance
 
 
-Via Docker with a graphical instance of Firefox (Linux)
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+Via Docker showing the Firefox window (Linux)
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 1. Check the first step in the `Via Docker`_ section.
 
@@ -52,26 +105,24 @@ Via Docker with a graphical instance of Firefox (Linux)
   $ xhost local:root
   non-network local connections being added to access control list
 
-3. Run ``docker``:
+3. Run ``docker-compose``:
 
 .. code-block:: bash
 
   $ docker-compose -f docker-compose.test.yml run --rm acceptance
 
 
-Via Docker with a graphical instance of Firefox (macOS)
+Via Docker showing the Firefox window (MacOS)
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 1. Check the first step in the `Via Docker`_ section.
 
-2. Install **XQuartz**: go to the `XQuartz website`_ and install the latest version.
-   In alternative, run:
+2. Install **XQuartz**: go to the `XQuartz website`_ and install the latest
+   version. For example, run:
 
 .. code-block:: bash
 
   $ brew cask install xquartz
-
-.. _`XQuartz website`: https://www.xquartz.org/
 
 3. Having installed **XQuartz**, run it and open the **XQuartz** ->
    **Preferences** menu from the bar. Go to the last tab, **Security**, enable
@@ -104,7 +155,7 @@ Via Docker with a graphical instance of Firefox (macOS)
 
   $ export DISPLAY=123.456.7.890:0
 
-7. Run ``docker``:
+7. Run ``docker-compose``:
 
 .. code-block:: bash
 
@@ -112,10 +163,10 @@ Via Docker with a graphical instance of Firefox (macOS)
 
 
 How to Write the Selenium Tests
--------------------------------
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 Selenium Test Framework
-~~~~~~~~~~~~~~~~~~~~~~~
+.......................
 
 INSPIRE's Selenium tests are written using an in-house framework called BAT
 (:file:`inspirehep/bat`). The framework is made of four main components:
@@ -128,8 +179,8 @@ INSPIRE's Selenium tests are written using an in-house framework called BAT
 .. figure:: images/BAT_Framework.png
 
 
-Tests
-~~~~~
+Test functions
+..............
 
 Tests don't call directly Selenium methods, but call methods on `Pages`, which
 are eventually translated to Selenium calls.
@@ -150,7 +201,7 @@ email, they don't see it.
 
 
 Pages
-~~~~~
+.....
 
 Pages are abstractions of web pages served by INSPIRE. Concretely, a page is a
 collection of methods in a module that implement the various action that a user
@@ -161,7 +212,7 @@ can take when interacting with that page. For example the
     def go_to():
         Arsenic().get(os.environ['SERVER_NAME'] + '/authors/new')
 
-method in :file:`inspirehep/bat/pages/create_author.py` represents the action of
+method in ``inspirehep/bat/pages/create_author.py`` represents the action of
 visiting the "Create Author" page, while
 
 .. code-block:: python
@@ -183,15 +234,21 @@ if the action was successful or not.
 
 
 Arsenic
-~~~~~~~
+.......
 
 The ``Arsenic`` class is a proxy to the Selenium object, plus some
 INSPIRE-specific methods added on top.
 
 
 ArsenicResponse
-~~~~~~~~~~~~~~~
+...............
 
 As mentioned above, an ``ArsenicResponse`` wraps a closure that is going to be
 used by an ``has_error`` call to determine if the action executed
 successfully.
+
+
+.. _Selenium: http://docs.seleniumhq.org/
+.. _install them now: https://github.com/inspirehep/inspire-next/pull/1015
+.. _`XQuartz website`: https://www.xquartz.org/
+
