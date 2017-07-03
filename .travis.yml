@@ -38,10 +38,6 @@ env:
     - BASE_USER_GID=2000
   matrix:
     - SUITE=workflows
-    - SUITE=integration
-    - SUITE=disambiguation
-    - SUITE=acceptance
-    - SUITE=unit
 
 matrix:
   fast_finish: true
@@ -49,27 +45,7 @@ matrix:
 python:
   - 2.7
 
-before_install:
-  - travis_retry pip install coveralls
-  # See: https://docs.travis-ci.com/user/docker/#Using-Docker-Compose
-  - sudo rm -f /usr/local/bin/docker-compose
-  - curl -L https://github.com/docker/compose/releases/download/${DOCKER_COMPOSE_VERSION}/docker-compose-`uname -s`-`uname -m` > docker-compose
-  - chmod +x docker-compose
-  - sudo mv docker-compose /usr/local/bin
-
-install:
-  - travis_retry docker-compose pull
-  - travis_retry docker-compose build
-  - travis_retry docker-compose -f docker-compose.deps.yml run --rm pip
-  - travis_retry docker-compose -f docker-compose.deps.yml run --rm assets
-
 script:
-  - docker-compose -f docker-compose.test.yml run --rm ${SUITE}
-
-after_script:
-  # Killing via SIGTERM in order to trigger atexit and dump coverage information in WSGI.
-  - docker-compose -f docker-compose.test.yml kill -s SIGTERM
-  - docker-compose -f docker-compose.test.yml rm -f
-  # Coverage report contains Docker paths. We replace them, so that we can run Coveralls.
-  - sed -i 's@\"/code/@'"\"$(pwd)/"'@g' .coverage
-  - coveralls
+  - free -m
+  - cat /proc/cpuinfo
+  - df -h
