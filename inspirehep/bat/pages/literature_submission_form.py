@@ -104,8 +104,6 @@ def submit_article(input_data):
     _populate_document_type('article')
     _populate_links(input_data)
     _populate_basic_info(input_data)
-    _populate_thesis_info(input_data)
-    _populate_references_comment(input_data)
     Arsenic().find_element_by_xpath(SUBMIT_BUTTON).click()
     Arsenic().show_title_bar()
 

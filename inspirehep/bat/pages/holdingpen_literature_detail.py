@@ -40,7 +40,9 @@ SUBJECT_AREAS = '(//div[@class="col-md-9 col-sm-9 col-xs-8 ng-binding"])'
 FIRST_SUBJECT_AREA = SUBJECT_AREAS + '[1]'
 SECOND_SUBJECT_AREA = SUBJECT_AREAS + '[2]'
 ACCEPT_NON_CORE_BUTTON = '//button[@class="btn btn-warning"]'
+REJECT_BUTTON = '//button[@class="btn btn-warning"]'
 ACCEPTED_MESSAGE = '//div[@class="alert ng-scope alert-accept"]'
+REJECTED_MESSAGE = '//div[@class="alert ng-scope alert-accept"]'
 
 
 def go_to():
@@ -91,6 +93,20 @@ def accept_record():
 
     WebDriverWait(Arsenic(), 10).until(
         TryClick((By.XPATH, ACCEPT_NON_CORE_BUTTON))
+    )
+
+    return ArsenicResponse(assert_has_no_errors_func=_assert_has_no_errors)
+
+
+def reject_record():
+    def _assert_has_no_errors():
+        message = WebDriverWait(Arsenic(), 10).until(
+            GetText((By.XPATH, REJECTED_MESSAGE))
+        )
+        assert 'Rejected' in message
+
+    WebDriverWait(Arsenic(), 10).until(
+        TryClick((By.XPATH, REJECT_BUTTON))
     )
 
     return ArsenicResponse(assert_has_no_errors_func=_assert_has_no_errors)
