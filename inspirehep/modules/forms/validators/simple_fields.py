@@ -142,7 +142,10 @@ def inspirehep_duplicated_validator(inspire_query, property_name, collections=No
     Needs to be wrapped in a function with proper validator signature.
     """
     if does_exist_in_inspirehep(inspire_query, collections):
-        url = "http://inspirehep.net/search?" + urlencode({'p': inspire_query})
+        url = "{0}?{1}".format(
+            current_app['LEGACY_MATCH_ENDPOINT'],
+            urlencode({'p': inspire_query})
+        )
         if collections:
             if len(collections) == 1:
                 url += '&' + urlencode({'cc': collections[0]})
