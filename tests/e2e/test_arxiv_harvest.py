@@ -108,6 +108,12 @@ def test_harvest_non_core_article_goes_in(inspire_client, mitm_client):
     record = inspire_client.literature.get_record(entry.control_number)
     assert record.title == entry.title
 
+    mitm_client.assert_interaction_used(
+        service_name='LegacyService',
+        interaction_name='robotupload',
+        times=1,
+    )
+
 
 def test_harvest_core_article_goes_in(inspire_client):
     mitm_client.set_scenario('harvest_core_article_goes_in')
@@ -148,3 +154,9 @@ def test_harvest_core_article_goes_in(inspire_client):
     # check literature record is available and consistent
     record = inspire_client.literature.get_record(entry.control_number)
     assert record.title == entry.title
+
+    mitm_client.assert_interaction_used(
+        service_name='LegacyService',
+        interaction_name='robotupload',
+        times=1,
+    )
