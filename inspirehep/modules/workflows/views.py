@@ -86,15 +86,11 @@ workflow_blueprint = Blueprint(
 
 
 @callback_blueprint.errorhandler(CallbackError)
+@workflow_blueprint.errorhandler(CallbackError)
 def error_handler(error):
     """Callback error handler."""
     response = jsonify(error.to_dict())
     return response, error.code
-
-
-@workflow_blueprint.errorhandler(RecordGetterError)
-def handle_record_getter_error(error):
-    return str(error.cause), 500
 
 
 def _get_base_url():
@@ -630,6 +626,7 @@ class ResolveEditArticleResource(MethodView):
 
     def put(self):
         """Handle callback for merge conflicts."""
+        raise Exception('AAAAAHHHHHHHHHH!!!!')
         workflow_data = workflow_loader()
         workflow_id = workflow_data['id']
 
@@ -645,7 +642,7 @@ class ResolveEditArticleResource(MethodView):
         recid = workflow_data['metadata'].get('control_number')
         try:
             record = get_db_record('lit', recid)
-        except:
+        except RecordGetterError:
             raise CallbackRecordNotFoundError(recid)
 
         record_permission = RecordPermission.create(action='update', record=record)
@@ -666,7 +663,7 @@ class ResolveEditArticleResource(MethodView):
 def start_edit_article_workflow(recid):
     try:
         record = get_db_record('lit', recid)
-    except:
+    except RecordGetterError:
         raise CallbackRecordNotFoundError(recid)
 
     record_permission = RecordPermission.create(action='update', record=record)
