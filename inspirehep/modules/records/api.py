@@ -48,7 +48,28 @@ from sqlalchemy.dialects import postgresql
 
 from inspirehep.modules.pidstore.minters import inspire_recid_minter
 from inspirehep.modules.pidstore.utils import get_pid_type_from_schema, get_endpoint_from_pid_type
-from inspirehep.modules.records.utils import populate_earliest_date
+from inspirehep.modules.records.utils import (
+    is_author,
+    is_book,
+    is_data,
+    is_experiment,
+    is_hep,
+    is_institution,
+    is_journal,
+    populate_abstract_source_suggest,
+    populate_affiliation_suggest,
+    populate_author_count,
+    populate_authors_full_name_unicode_normalized,
+    populate_authors_name_variations,
+    populate_bookautocomplete,
+    populate_citations_count,
+    populate_earliest_date,
+    populate_experiment_suggest,
+    populate_inspire_document_type,
+    populate_name_variations,
+    populate_recid_from_ref,
+    populate_title_suggest,
+)
 from inspirehep.utils.record_getter import (
     RecordGetterError,
     get_es_record_by_uuid
@@ -624,10 +645,64 @@ class InspireRecord(Record):
         Note: this is not suitable to create a new record from it, as the
               representation will include some extra fields that should not be
               present in the record's json, see the 'to_dict' method instead.
+
+        Note: ``populate_recid_from_ref`` **MUST** come before
+        ``populate_bookautocomplete`` because the latter puts a JSON reference
+        in a completion _source, which would be expanded to an incorrect
+        ``_source_recid`` by the former.
         """
         base_dict = super(InspireRecord, self).dumps()
-        populate_earliest_date(base_dict)
+
+        populate_recid_from_ref(base_dict)
+
+        if is_hep(base_dict):
+            populate_earliest_date(base_dict)
+            populate_author_count(base_dict)
+            populate_inspire_document_type(base_dict)
+
+        elif is_data(base_dict):
+            populate_citations_count(self, base_dict)
+
         return base_dict
+
+    @staticmethod
+    def dumps_to_es_document(record_dumps):
+        """Extends the given record.dumps() generated dict to include indexing
+        extra fields.
+
+
+        Note: It's required for it to modify the given dict by value when used
+              in a receiver.
+
+        Note: ``populate_recid_from_ref`` **MUST** come before
+              ``populate_bookautocomplete`` because the latter puts a JSON
+              reference in a completion _source, which would be expanded to an
+              incorrect ``_source_recid`` by the former.
+
+        Note: the _updated and _created fields are populated by invenio
+              indexer.
+        """
+        if is_hep(record_dumps):
+            populate_abstract_source_suggest(record_dumps)
+            populate_authors_full_name_unicode_normalized(record_dumps)
+            populate_name_variations(record_dumps)
+
+        elif is_author(record_dumps):
+            populate_authors_name_variations(record_dumps)
+
+        elif is_book(record_dumps):
+            populate_bookautocomplete(record_dumps)
+
+        elif is_institution(record_dumps):
+            populate_affiliation_suggest(record_dumps)
+
+        elif is_experiment(record_dumps):
+            populate_experiment_suggest(record_dumps)
+
+        elif is_journal(record_dumps):
+            populate_title_suggest(record_dumps)
+
+        return record_dumps
 
     def to_dict(self):
         """Gets a deep copy of the record's json."""

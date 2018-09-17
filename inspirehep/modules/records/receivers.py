@@ -32,9 +32,7 @@ from flask import current_app
 from flask_sqlalchemy import models_committed
 from elasticsearch import NotFoundError
 
-from invenio_indexer.api import RecordIndexer
 from invenio_indexer.signals import before_record_index
-from invenio_records.api import Record
 from invenio_records.models import RecordMetadata
 from invenio_records.signals import (
     after_record_update,
@@ -49,6 +47,8 @@ from inspirehep.modules.orcid.utils import (
     get_push_access_tokens,
     get_orcids_for_push,
 )
+from inspirehep.modules.records.api import InspireRecord
+from inspirehep.modules.records.indexer import InspireRecordIndexer
 from inspirehep.modules.records.utils import (
     is_author,
     is_book,
@@ -152,14 +152,14 @@ def index_after_commit(sender, changes):
     because, despite the name, at that point we are not yet sure whether the record
     has been really committed to the DB.
     """
-    indexer = RecordIndexer()
+    indexer = InspireRecordIndexer()
     for model_instance, change in changes:
         if isinstance(model_instance, RecordMetadata):
             if change in ('insert', 'update') and not model_instance.json.get("deleted"):
-                indexer.index(Record(model_instance.json, model_instance))
+                indexer.index(InspireRecord(model_instance.json, model_instance))
             else:
                 try:
-                    indexer.delete(Record(model_instance.json, model_instance))
+                    indexer.delete(InspireRecord(model_instance.json, model_instance))
                 except NotFoundError:
                     # Record not found in ES
                     LOGGER.debug('Record %s not found in ES', model_instance.json.get("id"))
@@ -167,41 +167,8 @@ def index_after_commit(sender, changes):
 
 
 @before_record_index.connect
-def enhance_after_index(sender, json, *args, **kwargs):
-    """Run all the receivers that enhance the record for ES in the right order.
-
-    .. note::
-
-       ``populate_recid_from_ref`` **MUST** come before ``populate_bookautocomplete``
-       because the latter puts a JSON reference in a completion _source, which
-       would be expanded to an incorrect ``_source_recid`` by the former.
-
+def enhance_before_index(sender, json, *args, **kwargs):
+    """Enhance the given record.dumps() json with the indexing extra fields.
     """
-    populate_recid_from_ref(json)
-
-    if is_hep(json):
-        populate_abstract_source_suggest(json)
-        populate_earliest_date(json)
-        populate_author_count(json)
-        populate_authors_full_name_unicode_normalized(json)
-        populate_inspire_document_type(json)
-        populate_name_variations(json)
-        populate_citations_count(sender, json)
-
-    elif is_author(json):
-        populate_authors_name_variations(json)
-
-    elif is_book(json):
-        populate_bookautocomplete(json)
-
-    elif is_institution(json):
-        populate_affiliation_suggest(json)
-
-    elif is_experiment(json):
-        populate_experiment_suggest(json)
-
-    elif is_journal(json):
-        populate_title_suggest(json)
-
-    elif is_data(json):
-        populate_citations_count(sender, json)
+    import ipdb; ipdb.set_trace()
+    InspireRecord.dumps_to_es_document(record_dumps=json)
