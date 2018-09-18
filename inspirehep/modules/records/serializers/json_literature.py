@@ -61,6 +61,14 @@ def _get_ui_metadata(record):
     return display
 
 
+def get_citations_count(original_record):
+    """ Try to get citations"""
+    if hasattr(original_record, 'get_citations_count'):
+        """Call it only when it has this method"""
+        return original_record.get_citations_count()
+    return None
+
+
 def _preprocess_result(result):
     """Add additional fields to output json"""
     # FIXME: Deprecated, must be removed once the new UI is released

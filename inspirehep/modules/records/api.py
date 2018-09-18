@@ -661,12 +661,11 @@ class InspireRecord(Record):
             populate_inspire_document_type(base_dict)
 
         elif is_data(base_dict):
-            populate_citations_count(self, base_dict)
+            populate_citations_count(record=self, jsoon=base_dict)
 
         return base_dict
 
-    @staticmethod
-    def dumps_to_es_document(record_dumps):
+    def to_es_document(self):
         """Extends the given record.dumps() generated dict to include indexing
         extra fields.
 
@@ -678,14 +677,13 @@ class InspireRecord(Record):
               ``populate_bookautocomplete`` because the latter puts a JSON
               reference in a completion _source, which would be expanded to an
               incorrect ``_source_recid`` by the former.
-
-        Note: the _updated and _created fields are populated by invenio
-              indexer.
         """
+        record_dumps = self.dumps()
         if is_hep(record_dumps):
             populate_abstract_source_suggest(record_dumps)
             populate_authors_full_name_unicode_normalized(record_dumps)
             populate_name_variations(record_dumps)
+            populate_citations_count(record=self, json=record_dumps)
 
         elif is_author(record_dumps):
             populate_authors_name_variations(record_dumps)

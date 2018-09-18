@@ -167,8 +167,11 @@ def index_after_commit(sender, changes):
 
 
 @before_record_index.connect
-def enhance_before_index(sender, json, *args, **kwargs):
-    """Enhance the given record.dumps() json with the indexing extra fields.
+def enhance_before_index(sender, json, record, *args, **kwargs):
+    """Enhance the given record with the indexing extra fields.
+
+    NOTE: the enhancement must be done by changing the actual contents of the
+          `json` parameter, as there's no return value.
     """
-    import ipdb; ipdb.set_trace()
-    InspireRecord.dumps_to_es_document(record_dumps=json)
+    extended_json = record.to_es_document()
+    json.update(extended_json)
